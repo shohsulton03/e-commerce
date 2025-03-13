@@ -3,6 +3,8 @@ import { AppModule } from './app.module';
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as cookieParser from 'cookie-parser';
+import { ResponseInterceptor } from './common/interceptors/response.interceptor';
+import { AllExceptionsFilter } from './common/filters/exception.filter';
 
 async function start() {
   try {
@@ -10,6 +12,8 @@ async function start() {
     console.log(PORT);
     const app = await NestFactory.create(AppModule);
     app.use(cookieParser());
+    app.useGlobalInterceptors(new ResponseInterceptor());
+    app.useGlobalFilters(new AllExceptionsFilter());
     app.useGlobalPipes(new ValidationPipe());
     app.setGlobalPrefix('api');
 
