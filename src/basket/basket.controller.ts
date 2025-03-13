@@ -7,6 +7,8 @@ import {
   Param,
   Delete,
   UseGuards,
+  Req,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { BasketService } from './basket.service';
 import { CreateBasketDto } from './dto/create-basket.dto';
@@ -16,6 +18,7 @@ import { Basket } from './entities/basket.entity';
 import { ClearBasketDto } from './dto/clear-bsaket.dto';
 import { AuthGuard } from '../common/guards/auth.guard';
 import { UserCreateGuard } from '../common/guards/user-create.guard';
+import { Request } from 'express';
 
 @ApiTags('basket')
 @Controller('basket')
@@ -31,8 +34,13 @@ export class BasketController {
   @UseGuards(UserCreateGuard)
   @UseGuards(AuthGuard)
   @Post()
-  create(@Body() createBasketDto: CreateBasketDto) {
-    return this.basketService.create(createBasketDto);
+  create(@Body() createBasketDto: CreateBasketDto, @Req() req: Request) {
+    const userId = req?.user?.['id'];
+
+    if (!userId) {
+      throw new UnauthorizedException('User ID not found');
+    }
+    return this.basketService.create(createBasketDto, +userId);
   }
 
   @ApiOperation({ summary: 'Get all data' })
@@ -44,22 +52,27 @@ export class BasketController {
   @UseGuards(UserCreateGuard)
   @UseGuards(AuthGuard)
   @Get()
-  findAll() {
-    return this.basketService.findAll();
+  findAll(@Req() req: Request) {
+    const userId = req?.user?.['id'];
+
+    if (!userId) {
+      throw new UnauthorizedException('User ID not found');
+    }
+    return this.basketService.findAll(+userId);
   }
 
-  @ApiOperation({ summary: 'Get one data by Id' })
-  @ApiResponse({
-    status: 200,
-    description: 'Get one by Id',
-    type: Basket,
-  })
-  @UseGuards(UserCreateGuard)
-  @UseGuards(AuthGuard)
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.basketService.findOne(+id);
-  }
+  // @ApiOperation({ summary: 'Get one data by Id' })
+  // @ApiResponse({
+  //   status: 200,
+  //   description: 'Get one by Id',
+  //   type: Basket,
+  // })
+  // @UseGuards(UserCreateGuard)
+  // @UseGuards(AuthGuard)
+  // @Get(':id')
+  // findOne(@Param('id') id: string) {
+  //   return this.basketService.findOne(+id);
+  // }
 
   @ApiOperation({ summary: 'Update one data by Id' })
   @ApiResponse({
@@ -70,8 +83,17 @@ export class BasketController {
   @UseGuards(UserCreateGuard)
   @UseGuards(AuthGuard)
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateBasketDto: UpdateBasketDto) {
-    return this.basketService.update(+id, updateBasketDto);
+  update(
+    @Param('id') id: string,
+    @Body() updateBasketDto: UpdateBasketDto,
+    @Req() req: Request,
+  ) {
+    const userId = req?.user?.['id'];
+
+    if (!userId) {
+      throw new UnauthorizedException('User ID not found');
+    }
+    return this.basketService.update(+id, updateBasketDto, +userId);
   }
 
   @ApiOperation({ summary: 'Delete all data by userId' })
@@ -83,8 +105,13 @@ export class BasketController {
   @UseGuards(UserCreateGuard)
   @UseGuards(AuthGuard)
   @Delete('clear')
-  clearUserBasket(@Body() clearBasketDto: ClearBasketDto) {
-    return this.basketService.clearUserBasket(clearBasketDto.userId);
+  clearUserBasket(@Req() req: Request) {
+    const userId = req?.user?.['id'];
+
+    if (!userId) {
+      throw new UnauthorizedException('User ID not found');
+    }
+    return this.basketService.clearUserBasket(+userId);
   }
 
   @ApiOperation({ summary: 'Delete one data by Id' })
@@ -96,7 +123,12 @@ export class BasketController {
   @UseGuards(UserCreateGuard)
   @UseGuards(AuthGuard)
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.basketService.remove(+id);
+  remove(@Param('id') id: string, @Req() req: Request) {
+    const userId = req?.user?.['id'];
+
+    if (!userId) {
+      throw new UnauthorizedException('User ID not found');
+    }
+    return this.basketService.remove(+id, +userId);
   }
 }

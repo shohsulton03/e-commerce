@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { CreateBasketDto } from './dto/create-basket.dto';
 import { UpdateBasketDto } from './dto/update-basket.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -16,7 +16,10 @@ export class BasketService {
     private readonly productService: ProductService,
   ) {}
 
-  async create(createBasketDto: CreateBasketDto) {
+  async create(createBasketDto: CreateBasketDto, userId: number) {
+    if (!userId || userId !== createBasketDto.userId) {
+      throw new UnauthorizedException('Ruxsat yoq')
+    }
     const user = await this.userService.findOne(createBasketDto.userId);
     if (!user) {
       throw new BadRequestException('User not found');
@@ -53,8 +56,8 @@ export class BasketService {
     return this.basketRepo.save(createBasketDto);
   }
 
-  async findAll() {
-    return this.basketRepo.find({ relations: ['user', 'product'] });
+  async findAll(userId:number) {
+    return this.basketRepo.find({where:{userId}, relations: ['user', 'product'] });
   }
 
   async findOne(id: number) {
@@ -70,11 +73,15 @@ export class BasketService {
     return basket;
   }
 
-  async update(id: number, updateBasketDto: UpdateBasketDto) {
+  async update(id: number, updateBasketDto: UpdateBasketDto, userId:number) {
     const basket = await this.basketRepo.findOne({ where: { id } });
 
     if (!basket) {
       throw new BadRequestException('Basket not found');
+    }
+
+    if (!userId || userId !== basket?.userId) {
+      throw new UnauthorizedException('Ruxsat yoq');
     }
 
     if (updateBasketDto.productId) {
@@ -112,11 +119,15 @@ export class BasketService {
     });
   }
 
-  async remove(id: number) {
+  async remove(id: number, userId:number) {
     const basket = await this.basketRepo.findOne({ where: { id } });
 
     if (!basket) {
       throw new BadRequestException('Basket not found');
+    }
+
+    if (!userId || userId !== basket?.userId) {
+      throw new UnauthorizedException('Ruxsat yoq');
     }
 
     const product = await this.productService.findOne(basket.productId);
@@ -141,7 +152,7 @@ export class BasketService {
     });
   }
 
-  async clearUserBasket(userId) {
+  async clearUserBasket(userId:number) {
 
     if (!userId || isNaN(userId)) {
       throw new BadRequestException('Invalid user ID');

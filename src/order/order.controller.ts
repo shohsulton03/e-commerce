@@ -7,6 +7,8 @@ import {
   Param,
   Delete,
   UseGuards,
+  Req,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -17,6 +19,7 @@ import { AdminGuard } from '../common/guards/admin.guard';
 import { AuthGuard } from '../common/guards/auth.guard';
 import { UserCreateGuard } from '../common/guards/user-create.guard';
 import { UserGuard } from '../common/guards/user.guard';
+import { Request } from 'express';
 
 @ApiTags('order')
 @Controller('order')
@@ -32,8 +35,13 @@ export class OrderController {
   @UseGuards(UserCreateGuard)
   @UseGuards(AuthGuard)
   @Post()
-  create(@Body() createOrderDto: CreateOrderDto) {
-    return this.orderService.create(createOrderDto);
+  create(@Req() req: Request) {
+    const userId = req?.user?.['id'];
+
+    if (!userId) {
+      throw new UnauthorizedException('User ID not found');
+    }
+    return this.orderService.create(+userId);
   }
 
   @ApiOperation({ summary: 'Get all data' })
@@ -55,11 +63,16 @@ export class OrderController {
     description: 'Get all by userId',
     type: Order,
   })
-  @UseGuards(UserGuard)
+  @UseGuards(UserCreateGuard)
   @UseGuards(AuthGuard)
-  @Get('user/:id')
-  getOrderByUserId(@Param('id') id: string) {
-    return this.orderService.getOrderByUserId(+id);
+  @Get('user-self')
+  getOrderByUserId(@Req() req: Request) {
+    const userId = req?.user?.['id'];
+
+    if (!userId) {
+      throw new UnauthorizedException('User ID not found');
+    }
+    return this.orderService.getOrderByUserId(+userId);
   }
 
   @ApiOperation({ summary: 'Get one data by Id' })

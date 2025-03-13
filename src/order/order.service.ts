@@ -14,8 +14,8 @@ export class OrderService {
     private readonly basketService: BasketService,
   ) {}
 
-  async create(createOrderDto: CreateOrderDto) {
-    const baskets = await this.basketService.getUserBasket(createOrderDto.userId)
+  async create(userId:number) {
+    const baskets = await this.basketService.getUserBasket(userId)
     if (!baskets.length) {
       throw new BadRequestException('Basket is empty')
     }
@@ -28,7 +28,7 @@ export class OrderService {
 
     await this.orderRepo.save(orders)
 
-    await this.basketService.clearUserBasket(createOrderDto.userId)
+    await this.basketService.clearUserBasket(userId)
 
     return { message: 'Order created successfully', orders };
   }

@@ -8,6 +8,9 @@ import {
   Delete,
   HttpCode,
   UseGuards,
+  ExecutionContext,
+  UnauthorizedException,
+  Req,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -19,6 +22,8 @@ import { AdminGuard } from '../common/guards/admin.guard';
 import { AuthGuard } from '../common/guards/auth.guard';
 import { UserGuard } from '../common/guards/user.guard';
 import { BothGuard } from '../common/guards/both.guard';
+import { UserCreateGuard } from '../common/guards/user-create.guard';
+import { Request } from 'express';
 
 @ApiTags('User')
 @Controller('user')
@@ -42,8 +47,8 @@ export class UserController {
     description: 'Give role Admin',
     type: User,
   })
-  @UseGuards(AdminGuard)
-  @UseGuards(AuthGuard)
+  // @UseGuards(AdminGuard)
+  // @UseGuards(AuthGuard)
   @HttpCode(200)
   @Post('giverole')
   giveRoleAdmin(@Body() giveRole: GiveRoleDto) {
@@ -63,13 +68,32 @@ export class UserController {
     return this.userService.findAll();
   }
 
+  @ApiOperation({ summary: 'Get self data' })
+  @ApiResponse({
+    status: 200,
+    description: 'Get one by Id',
+    type: User,
+  })
+  @UseGuards(UserCreateGuard)
+  @UseGuards(AuthGuard)
+  @Get('self-info')
+  async getSelfUserInfo(@Req() req: Request) {
+    const userId = req?.user?.['id'];
+
+    if (!userId) {
+      throw new UnauthorizedException('User ID not found');
+    }
+
+    return this.userService.findOne(+userId);
+  }
+
   @ApiOperation({ summary: 'Get one data by Id' })
   @ApiResponse({
     status: 200,
     description: 'Get one by Id',
     type: User,
   })
-  @UseGuards(BothGuard)
+  @UseGuards(AdminGuard)
   @UseGuards(AuthGuard)
   @Get(':id')
   findOne(@Param('id') id: string) {
@@ -89,13 +113,32 @@ export class UserController {
     return this.userService.update(+id, updateUserDto);
   }
 
+  @ApiOperation({ summary: 'Delete self' })
+  @ApiResponse({
+    status: 200,
+    description: 'Delete self',
+    type: Object,
+  })
+  @UseGuards(UserCreateGuard)
+  @UseGuards(AuthGuard)
+  @Delete('self-delete')
+  userSelfDelete(@Req() req: Request) {
+    const userId = req?.user?.['id'];
+
+    if (!userId) {
+      throw new UnauthorizedException('User ID not found');
+    }
+
+    return this.userService.remove(+userId);
+  }
+
   @ApiOperation({ summary: 'Delete one data by Id' })
   @ApiResponse({
     status: 200,
     description: 'Delete by Id',
     type: Object,
   })
-  @UseGuards(BothGuard)
+  @UseGuards(AdminGuard)
   @UseGuards(AuthGuard)
   @Delete(':id')
   remove(@Param('id') id: string) {

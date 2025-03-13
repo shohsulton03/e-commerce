@@ -10,6 +10,7 @@ import { User, UserRole } from './entities/user.entity';
 import { Repository } from 'typeorm';
 import { hash } from 'bcrypt';
 import { GiveRoleDto } from './dto/give-role.dto';
+import { Request } from 'express';
 
 @Injectable()
 export class UserService {
@@ -106,7 +107,7 @@ export class UserService {
       throw new BadRequestException('User not found');
     }
     await this.userRepo.delete(id);
-    return { message: 'User deleted succesfully' };
+    return { message: `User with ${id} deleted succesfully` };
   }
 
   async giveRoleAdmin(giveRoleDto: GiveRoleDto) {
